@@ -1,0 +1,12 @@
+# Aiken build artifacts from all contracts
+**/artifacts/
+**/build/
+**/docs/
+
+# Wallet keys and addresses from any contract folder
+**/*.sk
+**/*.addr
+
+# Local environment variables
+.env
+.env.*

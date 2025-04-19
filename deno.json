@@ -1,0 +1,11 @@
+{
+  "tasks": {
+    "build:contract": "cd contract && aiken build",
+    "test": "deno test --allow-env --allow-read --allow-net tests",
+    "test:contract": "cd contract && aiken check",
+    "blueprint": "cd contract && deno run -A https://deno.land/x/lucid/blueprint.ts"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1"
+  }
+}
