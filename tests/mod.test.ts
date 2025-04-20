@@ -37,9 +37,9 @@ const PAYMENT = await generateAccount({
   [MANE_UNIT]: 1_000_000_000_000n,
 });
 const USER_0 = await generateAccount({
-  lovelace: 1_000_000_000_000n,
+  lovelace: 10_000_000n,
   [MANE_UNIT]: 1_000_000_000_000n,
-  [toUnit(MyNFT1.policyId, MyNFT1.assetName)]: 1n,
+  // [toUnit(MyNFT1.policyId, MyNFT1.assetName)]: 1n,
   // [toUnit(MyNFT2.policyId, MyNFT2.assetName)]: 1n,
   // [toUnit(MyNFT3.policyId, MyNFT3.assetName)]: 1n,
   // [toUnit(MyNFT4.policyId, MyNFT4.assetName)]: 1n,
@@ -73,7 +73,7 @@ const paymentObject = [
   {
     address: PAYMENT.address,
     tokens: [
-      { policy_id: null, token_name: null, amount: 5_000_000n },
+      { policy_id: null, token_name: null, amount: 10_000_000n },
       { policy_id: MANE_POLICY_ID, token_name: MANE, amount: 10_000_000n },
     ],
   },
@@ -91,9 +91,11 @@ let mintedIds: number[] = [];
 Deno.test("Mint Multiple", async () => {
   lucid.selectWalletFromSeed(USER_0.seedPhrase);
   const contract = new Contract(lucid, instanceId);
-  const result = await contract.mint(userMetadataSamples, "lovelace");
+  const result = await contract.mint(userMetadataSamples, MANE_UNIT);
   mintedIds = result.mintedIds; // Use mintedUserIds or mintedPixelIds as appropriate
   emulator.awaitBlock();
+  const userAssets = await lucid.wallet.getUtxos();
+  console.log("User Assets:", userAssets);
 });
 
 Deno.test("Update Payment Options", async () => {

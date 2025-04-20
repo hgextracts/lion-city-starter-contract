@@ -147,5 +147,5 @@ export const PaymentDatum = Data.Object({
 });
 export type PaymentDatum = typeof PaymentDatum;
 
-export const Payments = Data.Array(PaymentDatum); // ✅ CORRECT
+export const Payments = Data.Array(PaymentDatum);
 export type Payments = typeof Payments;

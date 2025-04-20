@@ -188,7 +188,7 @@ export class Contract {
     // 👇 Let Data.to() handle type casting
     const inlineDatum = Data.to(datum, D.Payments);
 
-    // console.log("Inline Datum:", inlineDatum);
+    console.log("Inline Datum:", inlineDatum);
 
     return await this.lucid
       .newTx()
@@ -549,46 +549,45 @@ export class Contract {
       toUnit(this.controlPolicyId, fromText("Payment"))
     );
 
-    // 🔍 Decode datum from UTXO
     const paymentsDatum = await this.lucid.datumOf<D.Payments>(
       paymentUtxo,
       D.Payments
     );
 
-    // 🔍 Find matching payee and token
-    const foundPayment = paymentsDatum.find((p) => {
-      if (paymentOption === "lovelace") {
-        return p.value.get("")?.get("") !== undefined;
-      }
+    const { policyId, name: assetName } =
+      paymentOption === "lovelace"
+        ? { policyId: "", name: "" }
+        : fromUnit(paymentOption);
 
-      const { policyId, name: assetName } = fromUnit(paymentOption);
-      return (
-        assetName !== null &&
-        p.value.get(policyId)?.get(assetName) !== undefined
-      );
-    });
+    if (assetName === null) {
+      throw new Error("Invalid unit: missing asset name for token payment");
+    }
 
-    if (!foundPayment) {
+    // ✅ Find payments that expect this exact token
+    const matchedPayments = paymentsDatum.filter(
+      (p) => p.value.get(policyId)?.get(assetName) !== undefined
+    );
+
+    if (matchedPayments.length === 0) {
       throw new Error("Selected payment method not available.");
     }
 
-    const multiplier = BigInt(amount);
-    const address = toAddress(foundPayment.address, this.lucid);
+    const paymentTx = this.lucid.newTx();
 
-    // 🧮 Build value for this recipient scaled by `amount`
-    const scaledValue: Record<string, bigint> = {};
+    for (const p of matchedPayments) {
+      const recipient = toAddress(p.address, this.lucid);
+      const tokenAmount = p.value.get(policyId)?.get(assetName);
 
-    for (const [policyId, assetsMap] of foundPayment.value.entries()) {
-      for (const [assetName, tokenAmount] of assetsMap.entries()) {
-        const unit =
-          policyId === "" && assetName === ""
-            ? "lovelace"
-            : policyId + assetName;
-        scaledValue[unit] = tokenAmount * multiplier;
+      if (tokenAmount === undefined) {
+        throw new Error("Token amount missing for selected unit");
       }
-    }
 
-    const paymentTx = this.lucid.newTx().payTo(address, scaledValue);
+      const unit =
+        paymentOption === "lovelace" ? "lovelace" : policyId + assetName;
+      const scaledAmount = tokenAmount * BigInt(amount);
+
+      paymentTx.payTo(recipient, { [unit]: scaledAmount });
+    }
 
     return { paymentUtxo, paymentTx };
   }
