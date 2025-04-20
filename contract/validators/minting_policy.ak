@@ -8,7 +8,7 @@ use types.{
   Burn, DestroyLanes, LaneAction, LaneDatum, Mint, MintAction, Minting, Payment,
   Payments,
 }
-use utils.{get_self_input, token_paid}
+use utils.{get_self_input}
 
 validator minting_policy(
   control_policy_id: PolicyId,
@@ -111,7 +111,15 @@ validator minting_policy(
                   fn(output, acc) { assets.merge(acc, output.value) },
                 )
 
-              token_paid(total_value, payment.value, minted_count)
+              let unit_matched =
+                assets.flatten(payment.value)
+                  |> list.any(
+                      fn((pid, name, amt)) {
+                        quantity_of(total_value, pid, name) >= amt * minted_count
+                      },
+                    )
+
+              unit_matched
             },
           )
 

@@ -1,6 +1,5 @@
 use aiken/collection/dict
 use aiken/collection/list
-use cardano/assets.{Value, quantity_of}
 use cardano/transaction.{
   Datum, DatumHash, InlineDatum, Input, NoDatum, OutputReference, Transaction,
 }
@@ -24,20 +23,4 @@ pub fn get_data(tx: Transaction, datum: Datum) -> Data {
     }
     NoDatum -> fail
   }
-}
-
-/// ✅ Allows for more flexible payment validation (≥ expected amount).
-/// Used in contexts where overpayment is allowed.
-pub fn token_paid(
-  output_value: Value,
-  expected_value: Value,
-  multiplier: Int,
-) -> Bool {
-  expected_value
-    |> assets.flatten
-    |> list.all(
-        fn((pid, name, amt)) {
-          quantity_of(output_value, pid, name) >= amt * multiplier
-        },
-      )
 }
